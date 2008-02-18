@@ -12,6 +12,7 @@ e = (
 			{|code, event| 			
 			var stack, op, mem, res, res2, char, i = 0, j = 0, selector;
 			
+			event.use {
 			// some cleanup
 			// guarantee blanks after parentheses
 			code = 
@@ -27,7 +28,7 @@ e = (
 						$(, /*)*/ 
 						{
 							
-							mem !? { stack = stack.add(mem) };
+							stack = stack.add(mem);
 							j = code.find(" ", offset: i);
 							i = code.find(" ", offset: j + 1);
 							mem = List.new;
@@ -39,11 +40,11 @@ e = (
 						},
 						/*(*/ 
 						$), {
-								if(mem.notEmpty) {
-									res2 = mem[1..].reduce(mem[0]);
-									mem = stack.pop;
-									res !? { mem.add(res2) };
-								};
+								
+								res2 = mem[1..].reduce(mem[0]);
+								mem = stack.pop;
+								mem.add(res2);
+								
 								i = i + 1;
 								j = i;
 						},
@@ -61,15 +62,28 @@ e = (
 				
 				event.put(\result, res2)
 			}
+			}
 		)
 );
 );
 
+// ok, assuming such a little interpreter exists for a given language,
+// one can now use it in code.
+
 (
-e = <%   (+ 4 3 ( + 2 3 ) (/ 10 2))    %>.value(e); // 4 + 3 + (2 + 3) + (10 / 2)
+e = <%   (+ 4 3 ( + 2 (- 4 3) ) (/ 10 2))    %>.value(e); // 4 + 3 + (2 + (4 - 3)) + (10 / 2)
 e.result;
 )
+
+// values can be passed in as environment variables:
+(
+e.use { ~x = 8; ~y = 9 };
+e = <% (* ~x ~y) %>.value(e);
+e.result;
+);
 
 // remove preprocessor
 
 this.preProcessor = nil;
+e = nil;
+
